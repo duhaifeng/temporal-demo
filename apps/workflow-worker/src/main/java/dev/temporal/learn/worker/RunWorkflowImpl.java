@@ -34,8 +34,11 @@ public class RunWorkflowImpl implements RunWorkflow {
     private String phase = "STARTED";
 
     /**
-     * 业务 Activity 桩。真正的方法在同进程的 BusinessActivitiesImpl，
-     * 但调度到 joybot-business-v2，和编排任务分开排队。
+     * 业务 Activity 代理，不是 gRPC 连接。连接在 WorkflowWorkerMain 里由 LearnTemporal.stubs 建立。
+     * newActivityStub 只能在工作流回放中调用。执行 business.xxx 时，SDK 按这里的队列、超时和重试
+     * 生成“调度 Activity”命令；workflow-worker 完成 Workflow Task 时，用已有通道交给 Frontend。
+     * 真正的方法在同进程的 BusinessActivitiesImpl，队列是 joybot-business-v2，和编排任务分开排队。
+     * 回放再次走到同一次调用时，代理从历史取回结果，不再投新任务。
      */
     private final BusinessActivities business = Workflow.newActivityStub(BusinessActivities.class,
             ActivityOptions.newBuilder()
@@ -45,8 +48,9 @@ public class RunWorkflowImpl implements RunWorkflow {
                     .build());
 
     /**
-     * 模型 Activity 桩。真正的方法在 apps/agent-worker 的 ModelActivitiesImpl.modelTurn，
-     * 队列是 joybot-model-v2。心跳 10 秒是正式预算的缩小版，本 Demo 的方法立即返回。
+     * 模型 Activity 代理，机制与 business 相同：调用只产生调度命令，回放命中历史则直接返回。
+     * 真正的方法在 apps/agent-worker 的 ModelActivitiesImpl.modelTurn，队列是 joybot-model-v2。
+     * 心跳 10 秒是正式预算的缩小版，本 Demo 的方法立即返回。
      */
     private final ModelActivities model = Workflow.newActivityStub(ModelActivities.class,
             ActivityOptions.newBuilder()
@@ -59,15 +63,21 @@ public class RunWorkflowImpl implements RunWorkflow {
     @Override
     public RunResult execute(RunInput input) {
         phase = "ADMISSION";
-        // apps/workflow-worker/.../BusinessActivitiesImpl.v2BeginExecution
+        // 这不是对 BusinessActivitiesImpl 的直接调用。SDK 拦截后记下调度命令：
+        // 类型名 V2BeginExecution，载荷是 input，任务队列来自 business 代理上的 joybot-business-v2。
+        // 当前 Workflow Task 在此结束并把命令交给 History，History 写入 ActivityTaskScheduled，
+        // Matching 按该队列名放任务。businessWorker 执行完并产生 ActivityTaskCompleted 后，
+        // 回放再次走到这一行，才把 ExecutionSnapshot 赋给 snapshot。
         ExecutionSnapshot snapshot = business.v2BeginExecution(input);
 
         phase = "MODEL_TURN";
-        // apps/agent-worker/.../ModelActivitiesImpl.modelTurn，第一轮没有工具回执
+        // 同一拦截机制。命令里的队列是 model 代理上的 joybot-model-v2，类型名 ModelTurn。
+        // 第一轮没有工具回执。modelWorker 的完成事件进入历史后，这一行才得到 proposal。
         TurnResult proposal = model.modelTurn(new TurnRequest(
                 input.runId(), snapshot.agentExecutionId(), 1, snapshot.appliedInputSeq(),
                 List.of(), input.userText(), null));
-        // apps/workflow-worker/.../BusinessActivitiesImpl.v2CommitTurn
+        // 再次走 business 代理，类型名 V2CommitTurn，队列仍是 joybot-business-v2。
+        // 返回值为空，同样要等 ActivityTaskCompleted 才执行后面的派发。
         business.v2CommitTurn(proposal);
 
         phase = "DISPATCH";

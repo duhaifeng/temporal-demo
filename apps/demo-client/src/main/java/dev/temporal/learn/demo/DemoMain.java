@@ -45,23 +45,18 @@ public final class DemoMain {
                 "列出我云电脑桌面上的文件",
                 "2026-11-09T12:00:00Z");
         FlowLog.log("TEMPORAL",
-                "SDK 连接 " + LearnTemporal.address() + "  namespace=" + LearnTemporal.namespace(),
-                "预发正式名是 joybot-pre；本机开发服务使用 default");
-        FlowLog.log("WORKER",
-                "workflow-worker 轮询编排/业务队列，agent-worker 轮询模型队列",
-                "joybot-workflow-v2=编排  joybot-business-v2=控制面 HTTP  joybot-model-v2=单轮模型");
-        // 下面四条只打印正式系统会落库的事实，事务里不调用 Temporal。
+                "SDK 连接 " + LearnTemporal.address() + "  namespace=" + LearnTemporal.namespace()
+                        + "；workflow-worker 轮询编排/业务队列，agent-worker 轮询模型队列",
+                "预发正式名是 joybot-pre，本机用 default。joybot-workflow-v2=编排  joybot-business-v2=控制面 HTTP  joybot-model-v2=单轮模型");
+        // 下面三条只打印正式系统会落库的事实，事务里不调用 Temporal。
         FlowLog.log("WEB", "员工在 Thread " + input.threadId() + " 发送输入", input.userText());
         FlowLog.log("CONTROL_PLANE",
                 "一个数据库事务写入会话事实和启动意图。事务里不调用 Temporal",
                 "agent_thread + run_input seq=1 + agent_run id=42 + agent_execution id=7 + event_outbox id=9001");
         FlowLog.log("OUTBOX",
-                "提交后 publisher 领取 outbox 9001，向 Temporal 发起 StartWorkflowExecution",
+                "publisher 领取 outbox 9001 后发起 StartWorkflowExecution；Frontend 校验 namespace 后转给 History，History 写入启动事件并向 Matching 登记 Workflow Task",
                 "WorkflowType=RunWorkflowV2  WorkflowId=" + input.workflowId()
-                        + "  IdReusePolicy=REJECT_DUPLICATE");
-        FlowLog.log("TEMPORAL",
-                "Frontend 校验 namespace 后转给 History；History 把启动事件写入主存储，并向 Matching 登记 Workflow Task",
-                "service/frontend/workflow_handler.go StartWorkflowExecution → historyClient.StartWorkflowExecution");
+                        + "  IdReusePolicy=REJECT_DUPLICATE；service/frontend/workflow_handler.go StartWorkflowExecution → historyClient.StartWorkflowExecution");
 
         WorkflowServiceStubs stubs = LearnTemporal.stubs();
         WorkflowClient client = LearnTemporal.client(stubs);
