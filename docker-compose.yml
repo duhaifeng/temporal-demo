@@ -1,0 +1,20 @@
+# 学习用 Temporal 开发服务。业务数据不在这里，只保存工作流历史。
+# UI: http://127.0.0.1:8233    gRPC: 127.0.0.1:7233    namespace: default
+services:
+  temporal:
+    image: temporalio/temporal:latest
+    container_name: joybot-learn-temporal
+    command:
+      - server
+      - start-dev
+      - --ip
+      - 0.0.0.0
+      - --namespace
+      - default
+      - --db-filename
+      - /tmp/temporal.db
+      - --log-level
+      - warn
+    ports:
+      - "7233:7233"
+      - "8233:8233"

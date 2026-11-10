@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JoyBot 数据流 Demo 链路</title>
+  <style>
+    body { font-family: sans-serif; line-height: 1.55; max-width: 1100px; margin: 32px auto; padding: 0 20px; color: #1a1a1a; }
+    h1 { font-size: 1.6rem; }
+    h2 { font-size: 1.2rem; margin-top: 2rem; }
+    p, li { font-size: 0.95rem; }
+    table { border-collapse: collapse; width: 100%; margin: 12px 0 24px; }
+    th, td { border: 1px solid #ccc; padding: 8px 10px; text-align: left; vertical-align: top; }
+    th { background: #f4f4f4; }
+    code { font-family: ui-monospace, monospace; font-size: 0.88em; }
+    .note { background: #f7f7f7; padding: 12px 14px; margin: 16px 0; }
+    .mermaid { margin: 12px 0 28px; }
+  </style>
+</head>
+<body>
+  <h1>JoyBot 数据流 Demo 链路</h1>
+  <p>对照 <code>temporal-learn</code> 当前源码。一次成功的 Run 按下面两段时序走完。Temporal 的启动、历史、任务队列、Query 和 Signal 是真实调用。控制面账本、MySQL、模型和列目录只写在日志里。</p>
+  <div class="note">
+    <div>业务 Run 固定是 <code>42</code>，Thread 是 <code>88001</code>。Workflow ID 默认是 <code>joybot/run/当前毫秒</code>，和业务 Run ID 不是同一个值。</div>
+    <div>预发正式 namespace 是 <code>joybot-pre</code>。本机开发服务使用 <code>default</code>，地址 <code>127.0.0.1:7233</code>，界面 <code>http://127.0.0.1:8233</code>。</div>
+  </div>
+
+  <h2>谁在哪条队列上</h2>
+  <pre class="mermaid">
+flowchart LR
+  subgraph client [demo-client 一个进程]
+    WEB[页面]
+    CP[控制面事务]
+    OUT[outbox]
+    DEV[设备回执]
+  end
+  subgraph server [Temporal 开发服务]
+    FE[Frontend]
+    HIS[History / SQLite]
+    MAT[Matching]
+  end
+  subgraph wf [workflow-worker 一个进程]
+    WQ[joybot-workflow-v2<br/>RunWorkflowImpl]
+    BQ[joybot-business-v2<br/>BusinessActivitiesImpl]
+  end
+  subgraph agent [agent-worker]
+    MQ[joybot-model-v2<br/>ModelActivitiesImpl]
+  end
+  client --> FE
+  FE --> HIS
+  HIS --> MAT
+  MAT --> WQ
+  WQ --> BQ
+  WQ --> MQ
+  </pre>
+
+  <h2>从输入到等待工具回执</h2>
+  <pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant D as demo-client
+  participant F as Frontend
+  participant H as History
+  participant M as Matching
+  participant W as workflow-worker
+  participant B as business 队列
+  participant A as agent-worker
+
+  Note over D: 扮演页面、控制面、outbox、设备
+  D->>D: 生成 WorkflowId joybot/run/毫秒
+  D->>D: 记录输入「列出我云电脑桌面上的文件」
+  D->>D: 模拟事务 run=42 execution=7 outbox=9001
+  D->>F: StartWorkflowExecution RunWorkflowV2
+  Note over D,F: 队列 joybot-workflow-v2，REJECT_DUPLICATE
+  F->>H: 写入 WorkflowExecutionStarted
+  H->>H: 再写 WorkflowTaskScheduled
+  H->>M: 登记 Workflow Task
+  F-->>D: 返回 temporalRunId
+  M->>W: Poll 取走 Workflow Task
+  W->>W: 回放历史，phase=ADMISSION
+  W->>B: v2BeginExecution
+  Note over B: BusinessActivitiesImpl，模拟准入
+  B-->>W: execution=7 controlVersion=3
+  W->>W: phase=MODEL_TURN
+  W->>A: modelTurn stepSeq=1
+  Note over A: ModelActivitiesImpl，只提议 list_dir
+  A-->>W: disposition=TOOLS tool-100
+  W->>B: v2CommitTurn
+  B-->>W: 模拟提交 step=1
+  W->>W: phase=DISPATCH
+  W->>B: v2DispatchTools
+  B-->>W: 模拟命令 cmd-100，尚无回执
+  W->>B: markWaitingForToolSignal
+  W->>W: phase=WAIT_TOOL
+  Note over W: Workflow.await notify kind=TOOL，限时 30 秒
+  </pre>
+
+  <h2>回执唤醒之后直到结束</h2>
+  <pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant D as demo-client
+  participant F as Frontend
+  participant H as History
+  participant M as Matching
+  participant W as workflow-worker
+  participant B as business 队列
+  participant A as agent-worker
+
+  loop 每 200 毫秒，最多 30 秒
+    D->>F: Query phase
+    F->>W: 由等待中的 Workflow 回答
+    W-->>D: phase
+  end
+  D->>D: 模拟 Host 执行 list_dir
+  D->>D: 模拟回执事务 outbox=9002
+  D->>F: Signal notify kind=TOOL
+  Note over D,F: operationId=tool-100，文件为值班表.xlsx 与笔记.txt
+  F->>H: 追加 WorkflowExecutionSignaled
+  H->>M: 再登记一个 Workflow Task
+  M->>W: Poll 取走任务并回放
+  W->>W: 命中 TOOL，phase=MODEL_TURN
+  W->>A: modelTurn stepSeq=2
+  Note over A: 先应用 tool-100 的回执
+  A-->>W: disposition=FINAL
+  W->>B: v2CommitTurn
+  B-->>W: 模拟提交 outputRef
+  W->>W: phase=FINISH
+  W->>B: v2FinishExecution
+  B-->>W: 模拟 agent_run=SUCCEEDED
+  W->>W: phase=COMPLETED
+  W-->>D: getResult SUCCEEDED
+  D->>D: 模拟 SSE 展示助手正文
+  </pre>
+
+  <h2>30 秒内没有 TOOL 信号</h2>
+  <pre class="mermaid">
+flowchart TD
+  WAIT[phase=WAIT_TOOL] --> TIMEOUT[Workflow.await 返回 false]
+  TIMEOUT --> REVIEW[phase=NEEDS_REVIEW]
+  REVIEW --> MARK[BusinessActivitiesImpl.v2MarkNeedsReview]
+  MARK --> END[返回 NEEDS_REVIEW]
+  </pre>
+  <p><code>RunWorkflowImpl</code> 把超时记成待复核。这次返回不表示目录已经列完。</p>
+
+  <h2>断点打在哪个进程</h2>
+  <table>
+    <thead>
+      <tr><th>停在这里</th><th>调试配置</th><th>源码</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Start、Query、Signal</td><td>demo-client</td><td><code>apps/demo-client/.../DemoMain</code></td></tr>
+      <tr><td>回放、phase、Workflow.await</td><td>workflow-worker</td><td><code>apps/workflow-worker/.../RunWorkflowImpl</code></td></tr>
+      <tr><td>准入、提交、派发、收尾</td><td>workflow-worker</td><td><code>apps/workflow-worker/.../BusinessActivitiesImpl</code></td></tr>
+      <tr><td>两轮 modelTurn</td><td>agent-worker</td><td><code>apps/agent-worker/.../ModelActivitiesImpl</code></td></tr>
+    </tbody>
+  </table>
+  <p><code>RunWorkflowImpl.execute</code> 会在每个新的 Workflow Task 从头回放。Activity 方法只在对应 Worker 里真正执行一次。</p>
+  <p>同一 Workflow ID 再 Start 一次时，History 按 <code>REJECT_DUPLICATE</code> 拒绝。默认每次调试都会换一个新的 Workflow ID。要看这次拒绝，设置 <code>LEARN_WORKFLOW_ID=joybot/run/42</code> 后连续启动两次 Demo。</p>
+
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose" });
+  </script>
+</body>
+</html>

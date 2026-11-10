@@ -1,0 +1,36 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      // 先启动。断点打在 RunWorkflowImpl 和 BusinessActivitiesImpl。
+
+      "type": "java",
+      "name": "workflow-worker",
+      "request": "launch",
+      "mainClass": "dev.temporal.learn.worker.WorkflowWorkerMain",
+      "projectName": "learn-workflow-worker",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      // 第二个启动。断点打在 ModelActivitiesImpl。
+      "type": "java",
+      "name": "agent-worker",
+      "request": "launch",
+      "mainClass": "dev.temporal.learn.agent.AgentWorkerMain",
+      "projectName": "learn-agent-worker",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      // 最后启动。断点打在 DemoMain。两个 Worker 保持原调试会话。
+      "type": "java",
+      "name": "demo-client",
+      "request": "launch",
+      "mainClass": "dev.temporal.learn.demo.DemoMain",
+      "projectName": "learn-demo-client",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}
