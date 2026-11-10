@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import dev.temporal.learn.contract.BusinessActivities;
+import dev.temporal.learn.contract.ExecutionSnapshot;
 import dev.temporal.learn.contract.FinishRequest;
 import dev.temporal.learn.contract.LearnQueues;
 import dev.temporal.learn.contract.ModelActivities;
@@ -59,7 +60,7 @@ public class RunWorkflowImpl implements RunWorkflow {
     public RunResult execute(RunInput input) {
         phase = "ADMISSION";
         // apps/workflow-worker/.../BusinessActivitiesImpl.v2BeginExecution
-        var snapshot = business.v2BeginExecution(input);
+        ExecutionSnapshot snapshot = business.v2BeginExecution(input);
 
         phase = "MODEL_TURN";
         // apps/agent-worker/.../ModelActivitiesImpl.modelTurn，第一轮没有工具回执

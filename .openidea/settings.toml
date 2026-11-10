@@ -1,0 +1,3 @@
+[languages.java]
+jdk = "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home"
+jdtlsJdk = "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home"

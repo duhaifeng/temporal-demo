@@ -10,7 +10,8 @@
       "mainClass": "dev.temporal.learn.worker.WorkflowWorkerMain",
       "projectName": "learn-workflow-worker",
       "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}"
+      "cwd": "${workspaceFolder}",
+      "vmArgs": "--enable-native-access=ALL-UNNAMED --sun-misc-unsafe-memory-access=allow"
     },
     {
       // 第二个启动。断点打在 ModelActivitiesImpl。
@@ -20,7 +21,8 @@
       "mainClass": "dev.temporal.learn.agent.AgentWorkerMain",
       "projectName": "learn-agent-worker",
       "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}"
+      "cwd": "${workspaceFolder}",
+      "vmArgs": "--enable-native-access=ALL-UNNAMED --sun-misc-unsafe-memory-access=allow"
     },
     {
       // 最后启动。断点打在 DemoMain。两个 Worker 保持原调试会话。
@@ -30,7 +32,8 @@
       "mainClass": "dev.temporal.learn.demo.DemoMain",
       "projectName": "learn-demo-client",
       "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}"
+      "cwd": "${workspaceFolder}",
+      "vmArgs": "--enable-native-access=ALL-UNNAMED --sun-misc-unsafe-memory-access=allow"
     }
   ]
 }

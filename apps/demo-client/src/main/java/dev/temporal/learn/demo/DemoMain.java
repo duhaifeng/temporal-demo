@@ -18,6 +18,7 @@ import io.temporal.client.WorkflowClient;
 import io.temporal.client.WorkflowExecutionAlreadyStarted;
 import io.temporal.client.WorkflowOptions;
 import io.temporal.client.WorkflowStub;
+import io.temporal.serviceclient.WorkflowServiceStubs;
 
 /**
  * 调试入口，不注册 Worker。一个进程按顺序扮演四个角色：
@@ -62,7 +63,7 @@ public final class DemoMain {
                 "Frontend 校验 namespace 后转给 History；History 把启动事件写入主存储，并向 Matching 登记 Workflow Task",
                 "service/frontend/workflow_handler.go StartWorkflowExecution → historyClient.StartWorkflowExecution");
 
-        var stubs = LearnTemporal.stubs();
+        WorkflowServiceStubs stubs = LearnTemporal.stubs();
         WorkflowClient client = LearnTemporal.client(stubs);
         // 桩只描述 Workflow ID 和队列。execute 的方法体在 RunWorkflowImpl，不在本进程。
         RunWorkflow workflow = client.newWorkflowStub(RunWorkflow.class, WorkflowOptions.newBuilder()

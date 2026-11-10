@@ -7,6 +7,7 @@ import dev.temporal.learn.contract.LearnTemporal;
 
 import io.temporal.client.WorkflowClient;
 import io.temporal.serviceclient.WorkflowServiceStubs;
+import io.temporal.worker.Worker;
 import io.temporal.worker.WorkerFactory;
 
 /**
@@ -22,10 +23,10 @@ public final class WorkflowWorkerMain {
         WorkflowServiceStubs stubs = LearnTemporal.stubs();
         WorkflowClient client = LearnTemporal.client(stubs);
         WorkerFactory factory = WorkerFactory.newInstance(client);
-        var workflows = factory.newWorker(LearnQueues.WORKFLOW);
-        workflows.registerWorkflowImplementationTypes(RunWorkflowImpl.class);
-        var business = factory.newWorker(LearnQueues.BUSINESS);
-        business.registerActivitiesImplementations(new BusinessActivitiesImpl());
+        Worker workflowWorker = factory.newWorker(LearnQueues.WORKFLOW);
+        workflowWorker.registerWorkflowImplementationTypes(RunWorkflowImpl.class);
+        Worker businessWorker = factory.newWorker(LearnQueues.BUSINESS);
+        businessWorker.registerActivitiesImplementations(new BusinessActivitiesImpl());
         // 停调试时钩子先撤轮询，再放开 main，避免进程先退出而 Worker 线程还在跑。
         CountDownLatch running = new CountDownLatch(1);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {

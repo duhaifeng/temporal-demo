@@ -5,17 +5,19 @@ set -euo pipefail
 root=$(cd "$(dirname "$0")/.." && pwd)
 cd "$root"
 
-docker compose up -d
-for _ in $(seq 1 30); do
+./scripts/temporal-up.sh
+for _ in $(seq 1 60); do
   if (echo >/dev/tcp/127.0.0.1/7233) >/dev/null 2>&1; then
     break
   fi
   sleep 1
 done
 
-mvn -q -DskipTests package
+# JDK 25 对 Maven 的 Jansi/Guava，以及 gRPC Netty 的 sun.misc.Unsafe 会打兼容警告。
+jvm=(--enable-native-access=ALL-UNNAMED --sun-misc-unsafe-memory-access=allow)
+MAVEN_OPTS="${jvm[*]}" mvn -q -DskipTests package
 # 压住 Temporal SDK 的普通日志，只留 Demo 自己的顺序输出。
-opts=(-Dorg.slf4j.simpleLogger.defaultLogLevel=error)
+opts=("${jvm[@]}" -Dorg.slf4j.simpleLogger.defaultLogLevel=error)
 java "${opts[@]}" -jar apps/workflow-worker/target/workflow-worker.jar &
 workflow_pid=$!
 java "${opts[@]}" -jar apps/agent-worker/target/agent-worker.jar &

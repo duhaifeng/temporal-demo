@@ -22,11 +22,11 @@ cd /home/duhaifeng/Workspace/temporal-learn
 
 UI：http://127.0.0.1:8233。Namespace 是 `default`。每次启动 Demo 会使用新的 Workflow ID `joybot/run/<当前毫秒>`，业务 Run 仍是 `42`。要看同一 ID 被 `REJECT_DUPLICATE` 拒绝时，设置 `LEARN_WORKFLOW_ID=joybot/run/42` 连续启动两次。
 
-停服务：`docker compose down`。
+停服务：`container stop joybot-learn-temporal`，再执行 `kill $(cat /tmp/joybot-learn-temporal-proxy.pid)`。
 
 ## 分别调试
 
-先执行 `docker compose up -d`。然后在运行和调试里分别启动这三个配置，不要用 `run-demo.sh`：
+先执行 `./scripts/temporal-up.sh` 拉起 Temporal。然后在运行和调试里分别启动这三个配置，不要用 `run-demo.sh`：
 
 1. `workflow-worker`：断点打在 `RunWorkflowImpl` 和 `BusinessActivitiesImpl`。终端出现「已开始轮询」后再启动下一个。
 2. `agent-worker`：断点打在 `ModelActivitiesImpl`。
