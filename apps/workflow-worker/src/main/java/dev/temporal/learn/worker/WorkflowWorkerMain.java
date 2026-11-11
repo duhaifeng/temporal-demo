@@ -2,6 +2,7 @@ package dev.temporal.learn.worker;
 
 import java.util.concurrent.CountDownLatch;
 
+import dev.temporal.learn.contract.FlowLog;
 import dev.temporal.learn.contract.LearnQueues;
 import dev.temporal.learn.contract.LearnTemporal;
 
@@ -11,9 +12,8 @@ import io.temporal.worker.Worker;
 import io.temporal.worker.WorkerFactory;
 
 /**
- * workflow-worker 调试入口。一个进程轮询两条队列：
- * joybot-workflow-v2 执行 RunWorkflowImpl，joybot-business-v2 执行 BusinessActivitiesImpl。
- * main 停在 await，调试会话才会一直挂着。
+ * workflow-worker 调试入口。只轮询 joybot-workflow-v2，执行 RunWorkflowImpl。
+ * 控制面 Activity 在 apps/business-worker。main 停在 await，调试会话才会一直挂着。
  */
 public final class WorkflowWorkerMain {
     private WorkflowWorkerMain() {
@@ -25,8 +25,6 @@ public final class WorkflowWorkerMain {
         WorkerFactory factory = WorkerFactory.newInstance(client);
         Worker workflowWorker = factory.newWorker(LearnQueues.WORKFLOW);
         workflowWorker.registerWorkflowImplementationTypes(RunWorkflowImpl.class);
-        Worker businessWorker = factory.newWorker(LearnQueues.BUSINESS);
-        businessWorker.registerActivitiesImplementations(new BusinessActivitiesImpl());
         // 停调试时钩子先撤轮询，再放开 main，避免进程先退出而 Worker 线程还在跑。
         CountDownLatch running = new CountDownLatch(1);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -35,7 +33,7 @@ public final class WorkflowWorkerMain {
             running.countDown();
         }));
         factory.start();
-        System.out.println("workflow-worker 已开始轮询 " + LearnQueues.WORKFLOW + " 和 " + LearnQueues.BUSINESS);
+        FlowLog.log("WORKFLOW-WORKER", "已开始轮询 " + LearnQueues.WORKFLOW, null);
         running.await();
     }
 }

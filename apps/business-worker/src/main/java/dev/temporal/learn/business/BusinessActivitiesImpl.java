@@ -1,4 +1,4 @@
-package dev.temporal.learn.worker;
+package dev.temporal.learn.business;
 
 import dev.temporal.learn.contract.BusinessActivities;
 import dev.temporal.learn.contract.ExecutionSnapshot;
@@ -10,7 +10,7 @@ import dev.temporal.learn.contract.TurnResult;
 import dev.temporal.learn.contract.WaitRequest;
 
 /**
- * 控制面 Activity 的模拟实现，注册在 joybot-business-v2。
+ * 控制面 Activity 的模拟实现，由 apps/business-worker 注册到 joybot-business-v2。
  * 正式系统这些方法会调用 apps/control-plane 的 HTTP，并由 MySQL 提交。
  * 本类只打印本来会写入的账，然后返回教学用的固定快照。
  */
@@ -18,7 +18,7 @@ public class BusinessActivitiesImpl implements BusinessActivities {
     /** 对应控制面 POST runs/{runId}/executions/7/begin。执行体在本类，不在 RunWorkflowImpl。 */
     @Override
     public ExecutionSnapshot v2BeginExecution(RunInput input) {
-        FlowLog.log("WORKFLOW",
+        FlowLog.log("BUSINESS",
                 "Matching 把 Workflow Task 交给 joybot-workflow-v2；Worker 回放历史后执行到第一个 Activity",
                 "History 事件：WorkflowExecutionStarted → WorkflowTaskScheduled → WorkflowTaskStarted");
         FlowLog.log("BUSINESS",
@@ -71,8 +71,8 @@ public class BusinessActivitiesImpl implements BusinessActivities {
      */
     @Override
     public void markWaitingForToolSignal(WaitRequest request) {
-        FlowLog.log("WORKFLOW",
-                "Workflow.await(notify, kind=TOOL)。等待写在历史里，不占用 Activity 槽，Worker 可以把它逐出缓存",
+        FlowLog.log("BUSINESS",
+                "已记下等待。真正的 Workflow.await 在 apps/workflow-worker/.../RunWorkflowImpl",
                 "workflowId=" + request.workflowId() + " operationId=" + request.operationId()
                         + " 保险定时器在正式系统里是 120s，这里 Demo 用 30s");
     }
@@ -88,7 +88,7 @@ public class BusinessActivitiesImpl implements BusinessActivities {
                 "outputRef=" + request.outputRef());
     }
 
-    /** 30 秒内没有 TOOL 信号时由 RunWorkflowImpl 调用。 */
+    /** 30 秒内没有 TOOL 信号时由 apps/workflow-worker/.../RunWorkflowImpl 调用。 */
     @Override
     public void v2MarkNeedsReview(ReviewRequest request) {
         FlowLog.log("BUSINESS",

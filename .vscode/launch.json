@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      // 先启动。断点打在 RunWorkflowImpl 和 BusinessActivitiesImpl。
+      // 先启动。断点打在 RunWorkflowImpl。
 
       "type": "java",
       "name": "workflow-worker",
@@ -14,7 +14,18 @@
       "vmArgs": "--enable-native-access=ALL-UNNAMED --sun-misc-unsafe-memory-access=allow"
     },
     {
-      // 第二个启动。断点打在 ModelActivitiesImpl。
+      // 第二个启动。断点打在 BusinessActivitiesImpl。
+      "type": "java",
+      "name": "business-worker",
+      "request": "launch",
+      "mainClass": "dev.temporal.learn.business.BusinessWorkerMain",
+      "projectName": "learn-business-worker",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "vmArgs": "--enable-native-access=ALL-UNNAMED --sun-misc-unsafe-memory-access=allow"
+    },
+    {
+      // 第三个启动。断点打在 ModelActivitiesImpl。
       "type": "java",
       "name": "agent-worker",
       "request": "launch",
@@ -25,7 +36,7 @@
       "vmArgs": "--enable-native-access=ALL-UNNAMED --sun-misc-unsafe-memory-access=allow"
     },
     {
-      // 最后启动。断点打在 DemoMain。两个 Worker 保持原调试会话。
+      // 最后启动。断点打在 DemoMain。三个 Worker 保持原调试会话。
       "type": "java",
       "name": "demo-client",
       "request": "launch",

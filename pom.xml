@@ -10,12 +10,13 @@
   <name>Temporal learn</name>
   <!--
     学习用反应器。字节码目标 Java 17，可用本机 JDK 21 编译和运行。
-    contracts 放接口，三个 apps 分别是编排 Worker、模型 Worker 和启动客户端。
+    contracts 放接口。apps 分别是编排 Worker、控制面 Worker、模型 Worker 和启动客户端。
   -->
 
   <modules>
     <module>packages/contracts</module>
     <module>apps/workflow-worker</module>
+    <module>apps/business-worker</module>
     <module>apps/agent-worker</module>
     <module>apps/demo-client</module>
   </modules>

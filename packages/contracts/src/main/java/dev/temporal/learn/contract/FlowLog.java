@@ -10,7 +10,7 @@ import java.nio.file.StandardOpenOption;
 
 /**
  * 多个进程共用的顺序日志。序号存在本机文件里，打印时持有文件锁，
- * 所以 workflow-worker、agent-worker、demo-client 的输出仍按发生顺序编号。
+ * 所以 workflow-worker、business-worker、agent-worker、demo-client 的输出仍按发生顺序编号。
  * 每行带上当前 JVM 的进程号，用来区分同一种 Worker 的两个实例。
  * 这只服务于阅读，不是业务账。
  */

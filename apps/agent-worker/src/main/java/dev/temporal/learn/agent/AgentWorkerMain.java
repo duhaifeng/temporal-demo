@@ -2,6 +2,7 @@ package dev.temporal.learn.agent;
 
 import java.util.concurrent.CountDownLatch;
 
+import dev.temporal.learn.contract.FlowLog;
 import dev.temporal.learn.contract.LearnQueues;
 import dev.temporal.learn.contract.LearnTemporal;
 
@@ -51,7 +52,7 @@ public final class AgentWorkerMain {
         // SDK 还原参数后调用 apps/agent-worker/.../ModelActivitiesImpl.modelTurn，
         // 再把 TurnResult 序列化，用同一个 task token 完成这次 Activity。
         factory.start();
-        System.out.println("agent-worker 已开始轮询 " + LearnQueues.MODEL);
+        FlowLog.log("AGENT-WORKER", "已开始轮询 " + LearnQueues.MODEL, null);
         // 主线程停在这里维持进程。轮询在 factory.start 拉起的后台线程里。
         running.await();
     }

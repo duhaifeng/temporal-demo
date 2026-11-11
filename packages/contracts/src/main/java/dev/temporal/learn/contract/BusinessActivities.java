@@ -4,7 +4,7 @@ import io.temporal.activity.ActivityInterface;
 import io.temporal.activity.ActivityMethod;
 
 /**
- * 控制面 Activity。实现在 apps/workflow-worker 的 BusinessActivitiesImpl，
+ * 控制面 Activity。实现在 apps/business-worker 的 BusinessActivitiesImpl，
  * 注册到 joybot-business-v2。正式系统里这些方法是发往控制面的 HTTP。
  */
 @ActivityInterface

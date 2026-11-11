@@ -46,7 +46,7 @@ public final class DemoMain {
                 "2026-11-09T12:00:00Z");
         FlowLog.log("TEMPORAL",
                 "SDK 连接 " + LearnTemporal.address() + "  namespace=" + LearnTemporal.namespace()
-                        + "；workflow-worker 轮询编排/业务队列，agent-worker 轮询模型队列",
+                        + "；workflow-worker 轮询编排队列，business-worker 轮询控制面队列，agent-worker 轮询模型队列",
                 "预发正式名是 joybot-pre，本机用 default。joybot-workflow-v2=编排  joybot-business-v2=控制面 HTTP  joybot-model-v2=单轮模型");
         // 下面三条只打印正式系统会落库的事实，事务里不调用 Temporal。
         FlowLog.log("WEB", "员工在 Thread " + input.threadId() + " 发送输入", input.userText());
@@ -106,7 +106,7 @@ public final class DemoMain {
             Thread.sleep(200);
         }
         throw new IllegalStateException("30 秒内没有进入 " + expected + "，当前 phase=" + phase
-                + "。先确认 apps/workflow-worker 和 apps/agent-worker 已启动");
+                + "。先确认 apps/workflow-worker、apps/business-worker 和 apps/agent-worker 已启动");
     }
 
     /**
