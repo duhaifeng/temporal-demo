@@ -25,7 +25,7 @@ public class BusinessActivitiesImpl implements BusinessActivities {
                 "Activity v2BeginExecution  POST /internal/orchestration/v1/runs/" + input.runId()
                         + "/executions/7/begin",
                 "队列 joybot-business-v2。控制面做准入：授权、配额、截止时间。通过后返回快照，不把 prompt 正文写入 Temporal");
-        FlowLog.log("MYSQL",
+        FlowLog.log("BUSINESS",
                 "读 agent_run / run_admission / execution_profile，写执行绑定",
                 "runId=" + input.runId()
                         + " controlVersion=3 authorizationRevision=11 appliedInputSeq=1 resumeCheckpoint=none");
@@ -40,7 +40,7 @@ public class BusinessActivitiesImpl implements BusinessActivities {
                     "Activity v2CommitTurn  同一个业务事务提交步骤、事件尾和工具提议",
                     "agent_step stepSeq=" + turn.stepSeq() + " status=COMMITTED；tool_operation id="
                             + turn.operationId() + " 尚未执行");
-            FlowLog.log("MYSQL",
+            FlowLog.log("BUSINESS",
                     "thread_event 只追加「模型提议了 list_dir」。SSE 以后读这张表，不读 Temporal 历史",
                     "event_seq=18  kind=tool_proposal");
             return;
@@ -48,7 +48,7 @@ public class BusinessActivitiesImpl implements BusinessActivities {
         FlowLog.log("BUSINESS",
                 "Activity v2CommitTurn  提交最终输出引用和输入水位",
                 "stepSeq=" + turn.stepSeq() + " outputRef=" + turn.outputRef() + " appliedInputSeq=1");
-        FlowLog.log("MYSQL",
+        FlowLog.log("BUSINESS",
                 "thread_event 追加助手正文；artifact 表只保存引用，正文在对象存储",
                 "event_seq=21  kind=assistant_message");
     }
@@ -60,7 +60,7 @@ public class BusinessActivitiesImpl implements BusinessActivities {
                 "Activity v2DispatchTools  控制面把原操作派到 DEVICE，不在 Workflow 里点击或列目录",
                 "operationId=" + turn.operationId() + " route=" + turn.route() + " " + turn.toolName()
                         + " " + turn.toolInputPath());
-        FlowLog.log("MYSQL",
+        FlowLog.log("BUSINESS",
                 "写 tool_execution_command，并在同一事务写 event_outbox。此时还没有回执",
                 "commandId=cmd-100 status=DISPATCHED");
     }
@@ -83,7 +83,7 @@ public class BusinessActivitiesImpl implements BusinessActivities {
         FlowLog.log("BUSINESS",
                 "Activity v2FinishExecution  控制面把 Run 收成 SUCCEEDED，并释放准入名额",
                 "runId=" + request.runId() + " executionId=" + request.agentExecutionId());
-        FlowLog.log("MYSQL",
+        FlowLog.log("BUSINESS",
                 "agent_run.status=SUCCEEDED。这一笔是业务终态；Temporal Workflow 完成只说明编排走完",
                 "outputRef=" + request.outputRef());
     }

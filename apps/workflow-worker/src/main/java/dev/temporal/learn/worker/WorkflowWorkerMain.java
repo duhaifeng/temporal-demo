@@ -33,7 +33,7 @@ public final class WorkflowWorkerMain {
             running.countDown();
         }));
         factory.start();
-        FlowLog.log("WORKFLOW-WORKER", "已开始轮询 " + LearnQueues.WORKFLOW, null);
+        FlowLog.log("WORKFLOW", "已开始轮询 " + LearnQueues.WORKFLOW, null);
         running.await();
     }
 }

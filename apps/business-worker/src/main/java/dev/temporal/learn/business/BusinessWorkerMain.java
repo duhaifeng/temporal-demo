@@ -33,7 +33,7 @@ public final class BusinessWorkerMain {
             running.countDown();
         }));
         factory.start();
-        FlowLog.log("BUSINESS-WORKER", "已开始轮询 " + LearnQueues.BUSINESS, null);
+        FlowLog.log("BUSINESS", "已开始轮询 " + LearnQueues.BUSINESS, null);
         running.await();
     }
 }
