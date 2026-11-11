@@ -29,7 +29,7 @@ import io.temporal.workflow.Workflow;
  * 这里不能写 HTTP、SQL 或当前时间，外部结果只能来自 Activity 返回值和 Signal。
  */
 public class RunWorkflowImpl implements RunWorkflow {
-    /** notify 信号的收件箱。回放时 Temporal 会按历史重新调用 notifyChange。 */
+    /** signal-name 的收件箱。回放时 Temporal 会按历史重新调用 notifyChange。 */
     private final List<ToolSignal> inbox = new ArrayList<>();
     /** Query phase 读这个字段。它必须在 Workflow 代码里赋值，不能放进 Activity。 */
     private String phase = "STARTED";
@@ -101,7 +101,7 @@ public class RunWorkflowImpl implements RunWorkflow {
         // phase 在 await 之前赋值，demo-client 的 Query 才能看到 WAIT_TOOL。
         phase = "WAIT_TOOL";
         if (!Workflow.isReplaying()) {
-            FlowLog.log("WORKFLOW", "进入 Workflow.await，等待 notify 且 kind=TOOL",
+            FlowLog.log("WORKFLOW", "进入 Workflow.await，等待 signal-name 且 kind=TOOL",
                     "workflowId=" + input.workflowId() + " 超时 30 秒");
         }
         // 正式系统的保险定时器是 120 秒。到点返回 false，不把超时当成工具成功。
@@ -141,7 +141,7 @@ public class RunWorkflowImpl implements RunWorkflow {
         return new RunResult("SUCCEEDED", phase, answer.outputText());
     }
 
-    /** 信号入口。正式信号名是 notify，见 RunWorkflow.notifyChange。 */
+    /** 信号入口。线上信号名是 signal-name，见 RunWorkflow.notifyChange。 */
     @Override
     public void notifyChange(ToolSignal signal) {
         inbox.add(signal);

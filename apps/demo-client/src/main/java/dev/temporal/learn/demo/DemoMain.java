@@ -32,7 +32,10 @@ public final class DemoMain {
         FlowLog.reset();
         System.out.println();
         System.out.println("JoyBot 数据流 MVP    Temporal 是真的，MySQL / 设备 / 模型是按正式链路模拟的");
-        // 每次调试用新的 Workflow ID，才能反复打断点。固定 ID 时才会看到 REJECT_DUPLICATE。
+        // Workflow ID 由调用方指定，标识业务上的哪一次工作流，一个 ID 可以对应多次执行。
+        // Run ID 由 Temporal 在 Start 被接受时生成，只属于这一个 Workflow ID。
+        // 这里用 REJECT_DUPLICATE，并且每次用新的毫秒做 Workflow ID，所以每次运行都是一对一。
+        // 固定 LEARN_WORKFLOW_ID 再启动第二次会被拒绝，不会产生新的 Run ID。
         String configuredWorkflowId = System.getenv("LEARN_WORKFLOW_ID");
         String workflowId = configuredWorkflowId == null || configuredWorkflowId.isBlank()
                 ? "joybot/run/" + System.currentTimeMillis()
@@ -54,7 +57,7 @@ public final class DemoMain {
                 "agent_thread + run_input seq=1 + agent_run id=42 + agent_execution id=7 + event_outbox id=9001");
         FlowLog.log("DEMO_CLIENT",
                 "publisher 领取 outbox 9001 后发起 StartWorkflowExecution；Frontend 校验 namespace 后转给 History，History 写入启动事件并向 Matching 登记 Workflow Task",
-                "WorkflowType=RunWorkflowV2  WorkflowId=" + input.workflowId()
+                "WorkflowType=workflow-type-name  WorkflowId=" + input.workflowId()
                         + "  IdReusePolicy=REJECT_DUPLICATE；service/frontend/workflow_handler.go StartWorkflowExecution → historyClient.StartWorkflowExecution");
 
         WorkflowServiceStubs stubs = LearnTemporal.stubs();
@@ -67,7 +70,7 @@ public final class DemoMain {
                 .setMemo(Map.of("outboxId", "9001", "story", "temporal-learn"))
                 .build());
         try {
-            // start 只把 RunWorkflowV2 交给 Frontend，然后立刻返回，不等待工作流结束。
+            // start 只把 workflow-type-name 交给 Frontend，然后立刻返回，不等待工作流结束。
             WorkflowExecution execution = WorkflowClient.start(workflow::execute, input);
             FlowLog.log("DEMO_CLIENT",
                     "Start 已被接受。业务 Run 仍要等 v2BeginExecution 写完才算准入通过",
@@ -109,8 +112,8 @@ public final class DemoMain {
     }
 
     /**
-     * 模拟设备写完 journal 后，由 outbox 发 Signal notify。
-     * workflow.notifyChange 不执行 RunWorkflowImpl 的方法体，只向 Frontend 提交信号。
+     * 模拟设备写完 journal 后，由 outbox 发信号 signal-name。
+     * workflow.notifyChange 不执行 RunWorkflowImpl 的方法体，只按 Workflow ID 把消息交给正在运行的工作流。
      */
     private static void signalDevice(RunWorkflow workflow, String workflowId) {
         FlowLog.log("DEMO_CLIENT",
@@ -118,7 +121,7 @@ public final class DemoMain {
                 "operationId=tool-100 path=/home/user/Desktop files=值班表.xlsx,笔记.txt");
         FlowLog.log("DEMO_CLIENT",
                 "设备回执进控制面：校验原 operation、设备代次和 fence，同事务写账本与 TOOL outbox",
-                "outboxId=9002 kind=SIGNAL signal=notify payload.kind=TOOL");
+                "outboxId=9002 kind=SIGNAL signal=signal-name payload.kind=TOOL");
         FlowLog.log("DEMO_CLIENT",
                 "publisher 在事务外调用 SignalWorkflowExecution。published_at 只表示 Temporal 已接受",
                 "workflowId=" + workflowId + " operationId=tool-100");

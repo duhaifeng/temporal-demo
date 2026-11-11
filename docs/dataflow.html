@@ -70,7 +70,7 @@ sequenceDiagram
   D->>D: 生成 WorkflowId joybot/run/毫秒
   D->>D: 记录输入「列出我云电脑桌面上的文件」
   D->>D: 模拟事务 run=42 execution=7 outbox=9001
-  D->>F: StartWorkflowExecution RunWorkflowV2
+  D->>F: StartWorkflowExecution workflow-type-name
   Note over D,F: 队列 joybot-workflow-v2，REJECT_DUPLICATE
   F->>H: 写入 WorkflowExecutionStarted
   H->>H: 再写 WorkflowTaskScheduled
@@ -92,7 +92,7 @@ sequenceDiagram
   B-->>W: 模拟命令 cmd-100，尚无回执
   W->>B: markWaitingForToolSignal
   W->>W: phase=WAIT_TOOL
-  Note over W: Workflow.await notify kind=TOOL，限时 30 秒
+  Note over W: Workflow.await signal-name kind=TOOL，限时 30 秒
   </pre>
 
   <h2>回执唤醒之后直到结束</h2>
@@ -114,7 +114,7 @@ sequenceDiagram
   end
   D->>D: 模拟 Host 执行 list_dir
   D->>D: 模拟回执事务 outbox=9002
-  D->>F: Signal notify kind=TOOL
+  D->>F: Signal signal-name kind=TOOL
   Note over D,F: operationId=tool-100，文件为值班表.xlsx 与笔记.txt
   F->>H: 追加 WorkflowExecutionSignaled
   H->>M: 再登记一个 Workflow Task
