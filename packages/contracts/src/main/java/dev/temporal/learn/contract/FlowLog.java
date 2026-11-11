@@ -9,8 +9,9 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
 /**
- * 三个进程共用的顺序日志。序号存在本机文件里，打印时持有文件锁，
+ * 多个进程共用的顺序日志。序号存在本机文件里，打印时持有文件锁，
  * 所以 workflow-worker、agent-worker、demo-client 的输出仍按发生顺序编号。
+ * 每行带上当前 JVM 的进程号，用来区分同一种 Worker 的两个实例。
  * 这只服务于阅读，不是业务账。
  */
 public final class FlowLog {
@@ -33,15 +34,17 @@ public final class FlowLog {
         }
     }
 
-    /** actor 是链路角色，detail 另起一行。锁覆盖编号和打印，避免两行交叉。 */
+    /** actor 是链路角色。message 和 detail 打在同一行。锁覆盖编号和打印，避免两行交叉。 */
     public static void log(String actor, String message, String detail) {
         try (FileChannel channel = FileChannel.open(SEQ,
                 StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
             try (FileLock ignored = channel.lock()) {
                 int seq = readAndIncrement(channel);
-                System.out.printf("[%02d] %-16s %s%n", seq, actor, message);
+                long pid = ProcessHandle.current().pid();
                 if (detail != null && !detail.isBlank()) {
-                    System.out.println("     " + detail);
+                    System.out.printf("[%02d] pid=%-6d %-16s %s | %s%n", seq, pid, actor, message, detail);
+                } else {
+                    System.out.printf("[%02d] pid=%-6d %-16s %s%n", seq, pid, actor, message);
                 }
                 System.out.flush();
             }
