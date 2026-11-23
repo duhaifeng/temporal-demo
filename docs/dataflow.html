@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>JoyBot 数据流 Demo 链路</title>
+  <title>数据流 Demo 链路</title>
   <style>
     body { font-family: sans-serif; line-height: 1.55; max-width: 1100px; margin: 32px auto; padding: 0 20px; color: #1a1a1a; }
     h1 { font-size: 1.6rem; }
@@ -18,11 +18,11 @@
   </style>
 </head>
 <body>
-  <h1>JoyBot 数据流 Demo 链路</h1>
+  <h1>数据流 Demo 链路</h1>
   <p>对照 <code>temporal-learn</code> 当前源码。一次成功的 Run 按下面两段时序走完。Temporal 的启动、历史、任务队列、Query 和 Signal 是真实调用。控制面账本、MySQL、模型和列目录只写在日志里。</p>
   <div class="note">
     <div>业务 Run 固定是 <code>42</code>，Thread 是 <code>88001</code>。Workflow ID 默认是 <code>joybot/run/当前毫秒</code>，和业务 Run ID 不是同一个值。</div>
-    <div>预发正式 namespace 是 <code>joybot-pre</code>。本机开发服务使用 <code>default</code>，地址 <code>127.0.0.1:7233</code>，界面 <code>http://127.0.0.1:8233</code>。</div>
+    <div>本机开发服务使用 <code>default</code>，地址 <code>127.0.0.1:7233</code>，界面 <code>http://127.0.0.1:8233</code>。</div>
   </div>
 
   <h2>谁在哪条队列上</h2>

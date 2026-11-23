@@ -1,7 +1,7 @@
 package dev.temporal.learn.contract;
 
 /**
- * 三个任务队列，名字与 JoyBot {@code LoopV2Queues} 一致。
+ * 三个任务队列。
  * 队列只按能力分工：编排、控制面调用、单轮模型。公平、配额不由队列决定。
  *
  * 同一条队列可以有多个进程一起长轮询。Matching 把任务交给当时领到它的那个进程，

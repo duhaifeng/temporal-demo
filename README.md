@@ -1,16 +1,16 @@
 # Temporal Learn
 
-对照 JoyBot 的一次 v2 Run，看数据怎样从页面走到 Temporal，再回到页面。Temporal 历史是真的。MySQL、模型和云电脑按正式链路打印，没有连接 JoyBot 的库。
+看一次 Run 的数据怎样从页面走到 Temporal，再回到页面。Temporal 历史是真的。MySQL、模型和云电脑只按链路打印，没有连接真实业务库。
 
-## 和 JoyBot 的对应
+## 模块
 
-| 本仓库 | JoyBot | 做什么 |
-|---|---|---|
-| `packages/contracts` | `packages/contracts` | Workflow / Activity 接口和跨进程顺序日志 |
-| `apps/workflow-worker` | `apps/workflow-worker` | 工作流类型 `workflow-type-name`，轮询 `joybot-workflow-v2`。JoyBot 的类型名是 `RunWorkflowV2` |
-| `apps/business-worker` | `apps/workflow-worker` 里的控制面轮询 | `BusinessActivitiesImpl`，轮询 `joybot-business-v2`。JoyBot 里这条队列仍由 workflow-worker 轮询，本 Demo 把它拆成独立进程 |
-| `apps/agent-worker` | `apps/agent-worker` | 单轮模型 Activity，轮询 `joybot-model-v2`。JoyBot 这里是 Node，本 Demo 用 Java 模拟 |
-| `apps/demo-client` | 员工 Web + 控制面 outbox | 写启动意图、Start、等 `phase=WAIT_TOOL`、用设备回执 Signal |
+| 模块 | 做什么 |
+|---|---|
+| `packages/contracts` | Workflow / Activity 接口和跨进程顺序日志 |
+| `apps/workflow-worker` | 工作流类型 `workflow-type-name`，轮询 `joybot-workflow-v2` |
+| `apps/business-worker` | `BusinessActivitiesImpl`，独立进程轮询 `joybot-business-v2` |
+| `apps/agent-worker` | 单轮模型 Activity，轮询 `joybot-model-v2`。按 stepSeq 返回固定提议或最终回答，不调用模型 |
+| `apps/demo-client` | 写启动意图、Start、等 `phase=WAIT_TOOL`、用设备回执 Signal |
 
 字节码目标是 Java 17。本机用 JDK 21 运行即可。
 

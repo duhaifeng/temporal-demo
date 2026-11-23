@@ -3,8 +3,7 @@ package dev.temporal.learn.contract;
 import java.util.List;
 
 /**
- * 信号 signal-name 的载荷。JoyBot 正式信号名是 notify，按 kind 区分 TOOL、INPUT、CONTROL、RESOURCE。
- * 本 Demo 只发送 kind=TOOL。
+ * 信号 signal-name 的载荷。本 Demo 只发送 kind=TOOL。
  */
 public record ToolSignal(
         String kind,

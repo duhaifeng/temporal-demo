@@ -9,7 +9,7 @@ import dev.temporal.learn.contract.TurnResult;
 
 /**
  * 单轮模型活动，注册在 joybot-model-v2。
- * JoyBot 这里是 Node agent-worker 调 Pi；本类按 stepSeq 返回固定提议或最终回答，不调用模型。
+ * 按 stepSeq 返回固定提议或最终回答，不调用模型。
  */
 public class ModelActivitiesImpl implements ModelActivities {
     /**
@@ -20,7 +20,7 @@ public class ModelActivitiesImpl implements ModelActivities {
     public TurnResult modelTurn(TurnRequest request) {
         if (request.stepSeq() == 1) {
             FlowLog.log("MODEL",
-                    "Activity modelTurn  队列 joybot-model-v2，模拟 Node agent-worker 的单轮 Pi",
+                    "Activity modelTurn  队列 joybot-model-v2，按 stepSeq 模拟单轮模型",
                     "先 v2OpenTurn：按 execution+stepSeq 幂等领步骤，并为这次 Activity attempt 分配 fenceEpoch=1");
             FlowLog.log("MODEL",
                     "本轮没有工具回执。模型只提议一个动作，不执行 shell",

@@ -7,7 +7,7 @@ import io.temporal.serviceclient.WorkflowServiceStubsOptions;
 
 /**
  * 连接本机 Temporal 开发服务。三个应用都走这里，避免各写一份地址。
- * 预发正式 namespace 是 joybot-pre；本机开发服务使用 default。
+ * 本机开发服务使用 default。
  */
 public final class LearnTemporal {
     private LearnTemporal() {

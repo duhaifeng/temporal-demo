@@ -31,7 +31,7 @@ public final class DemoMain {
     public static void main(String[] args) throws Exception {
         FlowLog.reset();
         System.out.println();
-        System.out.println("JoyBot 数据流 MVP    Temporal 是真的，MySQL / 设备 / 模型是按正式链路模拟的");
+        System.out.println("数据流 MVP    Temporal 是真的，MySQL / 设备 / 模型只写在日志里");
         // Workflow ID 由调用方指定，标识业务上的哪一次工作流，一个 ID 可以对应多次执行。
         // Run ID 由 Temporal 在 Start 被接受时生成，只属于这一个 Workflow ID。
         // 这里用 REJECT_DUPLICATE，并且每次用新的毫秒做 Workflow ID，所以每次运行都是一对一。
@@ -49,7 +49,7 @@ public final class DemoMain {
         FlowLog.log("DEMO_CLIENT",
                 "SDK 连接 " + LearnTemporal.address() + "  namespace=" + LearnTemporal.namespace()
                         + "；workflow-worker 轮询编排队列，business-worker 轮询控制面队列，agent-worker 轮询模型队列",
-                "预发正式名是 joybot-pre，本机用 default。joybot-workflow-v2=编排  joybot-business-v2=控制面 HTTP  joybot-model-v2=单轮模型");
+                "本机 namespace=default。joybot-workflow-v2=编排  joybot-business-v2=控制面  joybot-model-v2=单轮模型");
         // 下面三条只打印正式系统会落库的事实，事务里不调用 Temporal。
         FlowLog.log("DEMO_CLIENT", "员工在 Thread " + input.threadId() + " 发送输入", input.userText());
         FlowLog.log("DEMO_CLIENT",
